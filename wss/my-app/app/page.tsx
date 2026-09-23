@@ -1,10 +1,6 @@
 import Link from "next/link";
 import { Counter } from "@/components/Counter";
 
-// app/page.tsx는 "/" 경로를 담당합니다 (File-based Routing).
-// 이 파일은 별도로 "use client"를 선언하지 않았으므로 기본값인
-// Server Component입니다 — 서버에서만 실행되고, 브라우저로는
-// 완성된 HTML만 전달됩니다.
 export default function Home() {
   return (
     <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
@@ -14,14 +10,13 @@ export default function Home() {
         </span>
 
         <h1 className="text-3xl font-semibold tracking-tight text-black dark:text-zinc-50">
-          웹서버보안프로그래밍 — 5주차
+          웹서버보안프로그래밍 — 김민재
         </h1>
         <p className="max-w-md text-base leading-7 text-zinc-600 dark:text-zinc-400">
           이번 주부터 학기 내내 성장할 &ldquo;공지사항 게시판&rdquo; 프로젝트를 시작합니다.
           상단 메뉴의 &ldquo;공지사항&rdquo;에서 확인해보세요.
         </p>
 
-        {/* Counter는 useState를 쓰는 Client Component 입니다. */}
         <Counter />
 
         <div className="flex flex-col gap-2 text-sm">

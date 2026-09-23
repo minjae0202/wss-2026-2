@@ -4,9 +4,6 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
-// shadcn/ui의 표준 Button 컴포넌트입니다. npm 패키지로 설치되는 게 아니라
-// 이렇게 소스코드 자체를 프로젝트에 복사해서 씁니다 — 그래서 자유롭게
-// 수정해도 되고, 프로젝트마다 다르게 커스터마이징할 수 있습니다.
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50",
   {

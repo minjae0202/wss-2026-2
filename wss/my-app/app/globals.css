@@ -1,6 +1,3 @@
-/* Tailwind v4는 tailwind.config.js 없이 CSS 파일 안에서 바로 설정합니다
-   (CSS-first 설정). 아래 @theme 블록이 곧 v3의 tailwind.config.js
-   theme.extend에 해당합니다. */
 @import "tailwindcss";
 
 :root {

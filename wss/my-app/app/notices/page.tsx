@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { getNotices } from "@/lib/notices";
 
-// products/page.tsx와 똑같은 패턴입니다: Server Component에서 바로
-// await로 데이터를 가져오고, 끝날 때까지 loading.tsx가 대신 보입니다.
 export default async function NoticesPage() {
   const notices = await getNotices();
 

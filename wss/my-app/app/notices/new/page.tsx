@@ -1,10 +1,6 @@
 import { createNoticeAction } from "@/lib/actions";
 import { SubmitButton } from "@/components/SubmitButton";
 
-// 이 페이지는 "use client"가 없는 Server Component입니다.
-// 그런데도 <form action={createNoticeAction}>만으로 서버에 데이터를
-// 저장할 수 있습니다 — Server Action을 폼에 직접 연결하는 방식입니다.
-// (제출 중 상태만 필요해서 SubmitButton 하나만 별도의 Client Component로 뺐습니다.)
 export default function NewNoticePage() {
   return (
     <div className="mx-auto flex max-w-2xl flex-1 flex-col gap-6 px-8 py-16">

@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { getProducts } from "@/lib/products";
 
-// Server Component에서 바로 await로 데이터를 가져올 수 있습니다.
-// 이 함수가 끝날 때까지 Next.js는 같은 폴더의 loading.tsx를 대신 보여줍니다.
 export default async function ProductsPage() {
   const products = await getProducts();
 

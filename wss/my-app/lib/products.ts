@@ -1,7 +1,3 @@
-// 6주차에 MongoDB로 교체되기 전까지 사용하는 임시(in-memory) 데이터입니다.
-// 함수를 async로 만들고 delay를 흉내낸 것은, 실제 DB 조회처럼 "시간이
-// 걸리는 데이터 페칭"을 재현해서 Suspense/loading.tsx 동작을 보기 위함입니다.
-
 export type Product = {
   id: string;
   name: string;
@@ -20,7 +16,7 @@ function delay(ms: number) {
 }
 
 export async function getProducts(): Promise<Product[]> {
-  await delay(700); // 실제 DB 조회를 흉내내는 지연 — loading.tsx가 보이는 이유
+  await delay(700);
   return products;
 }
 

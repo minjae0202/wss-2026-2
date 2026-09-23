@@ -1,5 +1,3 @@
-// products/loading.tsx와 같은 규칙입니다 — 파일 이름만으로
-// Suspense fallback이 자동 연결됩니다.
 export default function NoticesLoading() {
   return (
     <div className="mx-auto max-w-2xl flex-1 px-8 py-16">

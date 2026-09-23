@@ -1,8 +1,5 @@
 import Link from "next/link";
 
-// app/about/page.tsx → 자동으로 "/about" 경로가 됩니다.
-// 별도의 라우터 설정 파일 없이, 폴더 구조 자체가 URL 구조가 되는 것이
-// Next.js App Router의 File-based Routing입니다.
 export default function AboutPage() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-6 px-8 py-24 text-center">
