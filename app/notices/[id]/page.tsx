@@ -19,7 +19,7 @@ export default async function NoticeDetailPage({ params }: Props) {
       </Link>
       <h1 className="text-2xl font-semibold text-black dark:text-zinc-50">{notice.title}</h1>
       <p className="text-sm text-zinc-500 dark:text-zinc-400">
-        {notice.author} · {notice.createdAt}
+        {notice.author} · {notice.createdAt} · 조회 {notice.views}
       </p>
       <p className="whitespace-pre-wrap leading-7 text-zinc-700 dark:text-zinc-300">
         {notice.content}

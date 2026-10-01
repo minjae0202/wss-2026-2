@@ -24,7 +24,7 @@ export default async function NoticesPage() {
             >
               <p className="font-medium text-black dark:text-zinc-50">{n.title}</p>
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                {n.author} · {n.createdAt}
+                {n.author} · {n.createdAt} · 조회 {n.views}
               </p>
             </Link>
           </li>
