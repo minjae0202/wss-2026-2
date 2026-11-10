@@ -1,0 +1,130 @@
+import Link from 'next/link'
+import { getCartLines } from '@/lib/cart'
+import { getProductsByIds } from '@/lib/products'
+import {
+  updateCartQtyAction,
+  removeFromCartAction,
+  checkoutAction,
+} from '@/lib/actions'
+import { auth } from '@/auth'
+
+export default async function CartPage() {
+  const session = await auth()
+  const lines = await getCartLines()
+  const products = await getProductsByIds(lines.map((line) => line.productId))
+
+  const items = lines
+    .map((line) => {
+      const product = products.find((p) => p.id === line.productId)
+      return product ? { ...line, product } : null
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null)
+
+  const total = items.reduce(
+    (sum, item) => sum + item.product.price * item.qty,
+    0,
+  )
+
+  return (
+    <div className="mx-auto max-w-2xl flex-1 px-8 py-16">
+      <h1 className="mb-8 text-2xl font-semibold text-black dark:text-zinc-50">
+        장바구니
+      </h1>
+
+      {items.length === 0 ? (
+        <p className="text-zinc-500 dark:text-zinc-400">
+          장바구니가 비어 있습니다.{' '}
+          <Link href="/products" className="underline underline-offset-4">
+            상품 목록
+          </Link>
+          에서 담아보세요.
+        </p>
+      ) : (
+        <>
+          <ul className="flex flex-col gap-4">
+            {items.map((item) => (
+              <li
+                key={item.productId}
+                className="flex flex-wrap items-center gap-4 rounded-lg border border-black/[.08] px-5 py-4 dark:border-white/[.145]"
+              >
+                <span className="text-3xl" aria-hidden>
+                  {item.product.emoji}
+                </span>
+                <div className="flex-1">
+                  <p className="font-medium text-black dark:text-zinc-50">
+                    {item.product.name}
+                  </p>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                    {item.product.price.toLocaleString()}원 × {item.qty} ={' '}
+                    {(item.product.price * item.qty).toLocaleString()}원
+                  </p>
+                </div>
+                <form
+                  action={updateCartQtyAction}
+                  className="flex items-center gap-2"
+                >
+                  <input
+                    type="hidden"
+                    name="productId"
+                    value={item.productId}
+                  />
+                  <input
+                    type="number"
+                    name="qty"
+                    min={1}
+                    max={item.product.stock}
+                    defaultValue={item.qty}
+                    className="w-16 rounded-md border border-black/[.08] px-2 py-1 text-sm dark:border-white/[.145] dark:bg-transparent"
+                  />
+                  <button
+                    type="submit"
+                    className="text-sm text-zinc-500 underline underline-offset-4 hover:text-black dark:hover:text-zinc-50"
+                  >
+                    수량 변경
+                  </button>
+                </form>
+                <form action={removeFromCartAction}>
+                  <input
+                    type="hidden"
+                    name="productId"
+                    value={item.productId}
+                  />
+                  <button
+                    type="submit"
+                    className="text-sm text-red-600 underline underline-offset-4 hover:text-red-700"
+                  >
+                    삭제
+                  </button>
+                </form>
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-8 flex items-center justify-between border-t border-black/[.08] pt-6 dark:border-white/[.145]">
+            <p className="text-lg font-semibold text-black dark:text-zinc-50">
+              총 {total.toLocaleString()}원
+            </p>
+
+            {session?.user ? (
+              <form action={checkoutAction}>
+                <button
+                  type="submit"
+                  className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white hover:bg-black/85 dark:bg-white dark:text-black"
+                >
+                  결제하기
+                </button>
+              </form>
+            ) : (
+              <Link
+                href="/login"
+                className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white hover:bg-black/85 dark:bg-white dark:text-black"
+              >
+                로그인하고 결제하기
+              </Link>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}

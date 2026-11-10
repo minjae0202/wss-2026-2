@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
-import type { ReactNode } from 'react'
 import { Geist, Geist_Mono } from 'next/font/google'
-import { SiteHeader } from '@/components/SiteHeader'
 import './globals.css'
+import { ReactNode } from 'react'
+import { SiteHeader } from '@/components/SiteHeader'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: '웹서버보안프로그래밍 — 5주차 공지사항 게시판',
-  description: 'Next.js 16 App Router 실습 — 공지사항 게시판 (5주차)',
+  title: '웹서버보안프로그래밍 — 김민재',
+  description: 'Next.js 16 App Router 실습 — 공지사항 게시판과 쇼핑몰',
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {
