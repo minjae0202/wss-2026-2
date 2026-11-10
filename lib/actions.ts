@@ -1,67 +1,197 @@
-"use server";
+'use server'
 
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { AuthError } from "next-auth";
-import { likeProduct as likeProductInDb } from "@/lib/products";
-import { createNotice } from "@/lib/notices";
-import { createUser } from "@/lib/users";
-import { signIn, signOut } from "@/auth";
+import { revalidatePath } from 'next/cache'
+import { createNotice, deleteNotice, getNotice } from './notices'
+import { redirect } from 'next/navigation'
+import { createUser } from './users'
+import { auth, signIn, signOut } from '@/auth'
+import { AuthError } from 'next-auth'
+import {
+  decrementStock,
+  getProduct,
+  getProductsByIds,
+  likeProduct,
+} from './products'
+import {
+  addToCart,
+  clearCart,
+  getCartLines,
+  removeFromCart,
+  updateCartQty,
+} from './cart'
+import { createOrder } from './orders'
 
 export async function likeProductAction(id: string) {
-  const newLikes = await likeProductInDb(id);
-  revalidatePath(`/products/${id}`);
-  return newLikes;
+  return likeProduct(id)
+}
+
+export async function addToCartAction(formData: FormData) {
+  const productId = String(formData.get('productId') ?? '')
+  const requestedQty = Math.max(1, Number(formData.get('qty') ?? 1) || 1)
+  if (!productId) {
+    throw new Error('잘못된 상품입니다.')
+  }
+
+  const product = await getProduct(productId)
+  if (!product || product.stock === 0) {
+    throw new Error('담을 수 없는 상품입니다.')
+  }
+
+  const qty = Math.min(requestedQty, product.stock)
+  await addToCart(productId, qty)
+
+  revalidatePath('/', 'layout')
+}
+
+export async function updateCartQtyAction(formData: FormData) {
+  const productId = String(formData.get('productId') ?? '')
+  const requestedQty = Number(formData.get('qty') ?? 0)
+  if (!productId) {
+    throw new Error('잘못된 상품입니다.')
+  }
+
+  if (requestedQty <= 0) {
+    await removeFromCart(productId)
+  } else {
+    const product = await getProduct(productId)
+    const qty = product ? Math.min(requestedQty, product.stock) : requestedQty
+    await updateCartQty(productId, qty)
+  }
+
+  revalidatePath('/', 'layout')
+}
+
+export async function removeFromCartAction(formData: FormData) {
+  const productId = String(formData.get('productId') ?? '')
+  if (!productId) {
+    throw new Error('잘못된 상품입니다.')
+  }
+  await removeFromCart(productId)
+  revalidatePath('/', 'layout')
+}
+
+export async function checkoutAction() {
+  const session = await auth()
+  if (!session?.user) {
+    redirect('/login')
+  }
+
+  const lines = await getCartLines()
+  if (lines.length === 0) {
+    throw new Error('장바구니가 비어 있습니다.')
+  }
+
+  const products = await getProductsByIds(lines.map((line) => line.productId))
+  const items = lines
+    .map((line) => {
+      const product = products.find((p) => p.id === line.productId)
+      if (!product) return null
+      const qty = Math.min(line.qty, product.stock)
+      if (qty <= 0) return null
+      return {
+        productId: product.id,
+        name: product.name,
+        price: product.price,
+        qty,
+      }
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null)
+
+  if (items.length === 0) {
+    throw new Error('주문할 수 있는 상품이 없습니다(품절되었을 수 있습니다).')
+  }
+
+  const order = await createOrder(session.user.id, items)
+  await Promise.all(
+    items.map((item) => decrementStock(item.productId, item.qty)),
+  )
+  await clearCart()
+
+  revalidatePath('/', 'layout')
+  revalidatePath('/orders')
+  redirect(`/orders/${order.id}`)
 }
 
 export async function createNoticeAction(formData: FormData) {
-  const title = String(formData.get("title") ?? "").trim();
-  const author = String(formData.get("author") ?? "").trim();
-  const content = String(formData.get("content") ?? "").trim();
-
-  if (!title || !author || !content) {
-    throw new Error("제목, 작성자, 내용을 모두 입력해주세요.");
+  const session = await auth()
+  if (!session?.user) {
+    redirect('/login')
   }
 
-  const notice = await createNotice({ title, author, content });
-  revalidatePath("/notices");
-  redirect(`/notices/${notice.id}`);
+  const title = String(formData.get('title') ?? '').trim()
+  const content = String(formData.get('content') ?? '').trim()
+
+  if (!title || !content) {
+    throw new Error('제목, 내용을 모두 입력해주세요.')
+  }
+
+  const notice = await createNotice({
+    title,
+    content,
+    authorId: session.user.id,
+    authorName: session.user.name ?? '이름 없음',
+  })
+  revalidatePath('/notices')
+  redirect(`/notices/${notice.id}`)
 }
 
-// 회원가입: 비밀번호를 해싱해 User 컬렉션에 저장한 뒤, 곧바로 로그인까지
-// 이어서 처리합니다. signIn()이 성공하면 내부적으로 리다이렉트를 던지므로
-// registerAction은 반환값을 따로 처리하지 않습니다.
+export async function deleteNoticeAction(formData: FormData) {
+  const id = String(formData.get('id') ?? '')
+  if (!id) {
+    throw new Error('잘못된 요청입니다.')
+  }
+
+  const session = await auth()
+  if (!session?.user) {
+    redirect('/login')
+  }
+
+  const notice = await getNotice(id)
+  if (!notice) {
+    throw new Error('존재하지 않는 게시글입니다.')
+  }
+
+  const isOwner = notice.authorId === session.user.id
+  const isAdmin = session.user.role === 'admin'
+  if (!isOwner && !isAdmin) {
+    throw new Error('삭제 권한이 없습니다.')
+  }
+
+  await deleteNotice(id)
+  revalidatePath('/notices')
+  redirect('/notices')
+}
+
 export async function registerAction(formData: FormData) {
-  const name = String(formData.get("name") ?? "").trim();
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  const password = String(formData.get("password") ?? "");
+  const name = String(formData.get('name') ?? '').trim()
+  const email = String(formData.get('email') ?? '')
+    .trim()
+    .toLowerCase()
+  const password = String(formData.get('password') ?? '')
 
   if (!name || !email || !password) {
-    throw new Error("이름, 이메일, 비밀번호를 모두 입력해주세요.");
-  }
-  if (password.length < 8) {
-    throw new Error("비밀번호는 8자 이상이어야 합니다.");
+    throw new Error('이름, 이메일, 비밀번호를 모두 입력해주세요.')
   }
 
-  await createUser({ name, email, password });
-  await signIn("credentials", { email, password, redirectTo: "/" });
+  if (password.length < 8) {
+    throw new Error('비밀번호는 8자 이상이어야 합니다. ')
+  }
+
+  await createUser({ name, email, password })
+  await signIn('credentials', { email, password, redirectTo: '/' })
 }
 
-// 로그인. Auth.js는 로그인 실패도 "에러를 던지는 방식"으로 알려줍니다.
-// AuthError만 따로 잡아서 /login?error=1 로 돌려보내고, 그 외의 에러
-// (Next.js의 리다이렉트 신호 포함)는 그대로 다시 던져야 합니다 — 여기서
-// 삼켜버리면 로그인 성공 후 리다이렉트까지 막혀버립니다.
 export async function loginAction(formData: FormData) {
   try {
-    await signIn("credentials", formData);
+    await signIn('credentials', formData)
   } catch (error) {
     if (error instanceof AuthError) {
-      redirect("/login?error=1");
+      redirect('/login?error=1')
     }
-    throw error;
+    throw error
   }
 }
 
 export async function logoutAction() {
-  await signOut({ redirectTo: "/" });
+  await signOut({ redirectTo: '/' })
 }

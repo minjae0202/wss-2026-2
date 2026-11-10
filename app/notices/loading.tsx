@@ -7,9 +7,11 @@ export default function NoticesLoading() {
           <div
             key={i}
             className="h-16 animate-pulse rounded-lg bg-black/[.04] dark:bg-white/[.06]"
-          />
+          >
+            로딩중...
+          </div>
         ))}
       </div>
     </div>
-  );
+  )
 }
